@@ -4,7 +4,7 @@ A Flask-based computer vision application that leverages Meta's Segment Anything
 
 ## Key Features
 - Automated scene component detection using SAM
-- Modular processing pipeline for image analysis
+- image processing pipeline for image analysis
 - RESTful API endpoints with Flask
 - PostgreSQL database with SQLAlchemy ORM
 - HTMX-powered frontend for real-time interactions
@@ -29,8 +29,8 @@ A Flask-based computer vision application that leverages Meta's Segment Anything
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/modular-scene-processing.git
-cd modular-scene-processing
+git clone https://github.com/tayokayo/image_processing.git
+cd image_processing
 ```
 
 2. Create and activate virtual environment
@@ -51,15 +51,15 @@ DB_USER=your_username
 DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=modular_scenes
-TEST_DB_NAME=modular_scenes_test
+DB_NAME=image_scenes
+TEST_DB_NAME=image_scenes_test
 ```
 
 5. Initialize the database
 ```bash
 # Create PostgreSQL databases
-createdb modular_scenes
-createdb modular_scenes_test
+createdb image_scenes
+createdb image_scenes_test
 
 # Run migrations
 flask db upgrade
@@ -67,7 +67,7 @@ flask db upgrade
 
 ## Project Structure
 ```
-modular-scenes-mvp/
+image-scenes-mvp/
 ├── app/                       # Application package
 │   ├── processing/           # Scene processing logic
 │   ├── templates/            # HTML templates
@@ -157,4 +157,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Contact
 
 Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
-Project Link: [https://github.com/yourusername/modular-scene-processing](https://github.com/yourusername/modular-scene-processing)
+Project Link: [https://github.com/yourusername/image-scene-processing](https://github.com/yourusername/image-scene-processing)
