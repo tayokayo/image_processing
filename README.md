@@ -1,6 +1,6 @@
 # Image Processing System
 
-A Flask-based computer vision application that leverages Meta's Segment Anything Model (SAM) for intelligent scene analysis and component detection. The system processes room scenes, identifies individual components, and manages the data through a PostgreSQL database.
+A Flask-based computer vision application that leverages Meta's Segment Anything Model (SAM) for intelligent scene analysis and component detection. The system processes product images, identifies individual components, and manages the data through a PostgreSQL database.
 
 ## Key Features
 - Automated scene component detection using SAM
