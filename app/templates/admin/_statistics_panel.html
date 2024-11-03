@@ -1,0 +1,78 @@
+<div class="mt-6 border-t border-gray-200 pt-6">
+    <h3 class="text-lg leading-6 font-medium text-gray-900">Scene Statistics</h3>
+    
+    <!-- Basic Stats Grid -->
+    <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4" 
+        hx-get="{{ url_for('admin.scene_statistics', scene_id=scene.id) }}"
+        hx-trigger="load, componentUpdated from:body"
+        hx-swap="innerHTML">
+        
+        <div class="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
+            <dt class="text-sm font-medium text-gray-500 truncate">Total Components</dt>
+            <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ basic_stats.total_components }}</dd>
+        </div>
+        
+        <div class="px-4 py-5 bg-yellow-50 shadow rounded-lg overflow-hidden sm:p-6">
+            <dt class="text-sm font-medium text-gray-500 truncate">Pending Review</dt>
+            <dd class="mt-1 text-3xl font-semibold text-yellow-900">{{ basic_stats.pending_components }}</dd>
+        </div>
+        
+        <div class="px-4 py-5 bg-green-50 shadow rounded-lg overflow-hidden sm:p-6">
+            <dt class="text-sm font-medium text-gray-500 truncate">Accepted</dt>
+            <dd class="mt-1 text-3xl font-semibold text-green-900">{{ basic_stats.accepted_components }}</dd>
+        </div>
+        
+        <div class="px-4 py-5 bg-red-50 shadow rounded-lg overflow-hidden sm:p-6">
+            <dt class="text-sm font-medium text-gray-500 truncate">Rejected</dt>
+            <dd class="mt-1 text-3xl font-semibold text-red-900">{{ basic_stats.rejected_components }}</dd>
+        </div>
+    </dl>
+
+    <!-- Detailed Statistics -->
+    <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Confidence Score Distribution -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h4 class="text-base font-medium text-gray-900">Confidence Score Distribution</h4>
+                <canvas id="confidence-chart" class="mt-4"></canvas>
+            </div>
+        </div>
+
+        <!-- Review Time Analysis -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h4 class="text-base font-medium text-gray-900">Review Time Analysis</h4>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-500">Average review time: 
+                        <span class="font-medium text-gray-900">
+                            {{ "%.1f"|format(detection_stats.review_times|avg|default(0)) }} seconds
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rejection Reasons -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h4 class="text-base font-medium text-gray-900">Rejection Reasons</h4>
+                <div class="mt-4 space-y-2">
+                    {% for reason, count in detection_stats.rejection_reasons.items() %}
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">{{ reason }}</span>
+                        <span class="font-medium text-gray-900">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Distribution -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h4 class="text-base font-medium text-gray-900">Category Distribution</h4>
+                <canvas id="category-chart" class="mt-4"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

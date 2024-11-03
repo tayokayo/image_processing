@@ -1,0 +1,3 @@
+2024-10-28 21:18:13,335 - scene_processing - ERROR - Validation error for <FileStorage: 'test_scene.jpg' ('image/jpeg')>: expected str, bytes or os.PathLike object, not FileStorage
+2024-10-28 21:51:39,297 - scene_processing - ERROR - Validation error for <FileStorage: 'test_scene.jpg' ('image/jpeg')>: expected str, bytes or os.PathLike object, not FileStorage
+2024-10-28 21:56:55,374 - scene_processing - ERROR - Validation error for <FileStorage: 'test_scene.jpg' ('image/jpeg')>: expected str, bytes or os.PathLike object, not FileStorage

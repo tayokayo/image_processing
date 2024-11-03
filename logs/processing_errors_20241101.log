@@ -1,0 +1,88 @@
+2024-11-01 18:22:53,739 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:22:53.739255', '2024-11-01 10:22:53.739258', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:22:53,739 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:22:53.739255', '2024-11-01 10:22:53.739258', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:30:18,861 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:30:18.861252', '2024-11-01 10:30:18.861277', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:30:18,861 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:30:18.861252', '2024-11-01 10:30:18.861277', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:33:20,589 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:33:20.589742', '2024-11-01 10:33:20.589745', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:33:20,589 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:33:20.589742', '2024-11-01 10:33:20.589745', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:34:00,015 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:34:00.014811', '2024-11-01 10:34:00.014822', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:34:00,015 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:34:00.014811', '2024-11-01 10:34:00.014822', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:35:02,943 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:35:02.943649', '2024-11-01 10:35:02.943651', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:35:02,943 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:35:02.943649', '2024-11-01 10:35:02.943651', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:39:11,649 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:39:11.649064', '2024-11-01 10:39:11.649067', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:39:11,649 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:39:11.649064', '2024-11-01 10:39:11.649067', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:42:22,707 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:42:22.707423', '2024-11-01 10:42:22.707428', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:42:22,707 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:42:22.707423', '2024-11-01 10:42:22.707428', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:59:49,581 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:59:49.580859', '2024-11-01 10:59:49.580863', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 18:59:49,581 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 10:59:49.580859', '2024-11-01 10:59:49.580863', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:45:29,815 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:45:29.815007', '2024-11-01 11:45:29.815010', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:45:29,815 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:45:29.815007', '2024-11-01 11:45:29.815010', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:50:30,213 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:50:30.213330', '2024-11-01 11:50:30.213333', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:50:30,213 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:50:30.213330', '2024-11-01 11:50:30.213333', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:52:46,813 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:52:46.813540', '2024-11-01 11:52:46.813542', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-11-01 19:52:46,813 - scene_processing - ERROR - File: storage/temp/quality_scene.jpg - Type: SceneProcessingError - Message: (sqlite3.OperationalError) no such table: room_scenes
+[SQL: INSERT INTO room_scenes (name, category, file_path, created_at, updated_at, scene_metadata, review_completion_time, total_components, pending_components, accepted_components, rejected_components) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('quality_scene', 'living_room', 'storage/temp/quality_scene.jpg', '2024-11-01 11:52:46.813540', '2024-11-01 11:52:46.813542', '{"height": 1080, "width": 1920, "channels": 3, "mean_color": [194.16644290123457, 191.27949845679012, 188.4359447337963]}', None, 0, 0, 0, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

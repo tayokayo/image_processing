@@ -1,0 +1,199 @@
+{% extends "admin/base.html" %}
+{% block title %}Scene Details{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow sm:rounded-lg" data-scene-id="{{ scene.id }}">
+    <div class="px-4 py-5 sm:p-6">
+        <!-- Scene Header -->
+        <div class="md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                    {{ scene.name }}
+                </h2>
+                <div class="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:mt-0 sm:space-x-6">
+                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                        Category: {{ scene.category }}
+                    </div>
+                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                        Created: {{ scene.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Summary -->
+        <div class="mt-6 border-t border-gray-200 pt-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Detection Summary</h3>
+            <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4" 
+                hx-get="{{ url_for('admin.scene_statistics', scene_id=scene.id) }}"
+                hx-trigger="load, componentUpdated from:body"
+                hx-swap="innerHTML">
+                <!-- Summary stats are loaded via HTMX -->
+            </dl>
+            
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold inline-block text-gray-600">
+                                Review Progress
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold inline-block text-gray-600" id="progress-percentage">
+                                {{ "%.1f"|format(scene.review_progress) }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                        <div id="progress-bar"
+                             style="width:{{ scene.review_progress }}%"
+                             class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        {% include "admin/_statistics_panel.html" %}
+
+        <!-- Components List -->
+        <div class="mt-6 border-t border-gray-200 pt-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Components Review
+            </h3>
+            
+            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {% for component in components %}
+                    {% include "admin/_component_card.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const sceneId = document.querySelector('[data-scene-id]').dataset.sceneId;
+
+// Update progress bar
+function updateProgress(progress) {
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-percentage');
+    progressBar.style.width = `${progress}%`;
+    progressText.textContent = `${progress.toFixed(1)}%`;
+}
+
+// Load and render statistics
+function loadStatistics() {
+    fetch(`/api/scene/${sceneId}/statistics`)
+        .then(response => response.json())
+        .then(data => {
+            updateProgress(data.basic_stats.review_progress);
+            renderCharts(data);
+        });
+}
+
+// Add to scene_detail.html
+function showToast(message, type) {
+  Toastify({
+    text: message,
+    duration: 3000,
+    gravity: "top",
+    position: "right",
+    backgroundColor: type === 'error' ? '#EF4444' : '#10B981'
+  }).showToast();
+}
+
+function renderCharts(data) {
+    // Clear existing charts
+    document.getElementById('confidence-chart').innerHTML = '';
+    document.getElementById('types-chart').innerHTML = '';
+    document.getElementById('validation-chart').innerHTML = '';
+    
+    // Render confidence score distribution
+    new Chart(document.getElementById('confidence-chart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(data.detection_stats.confidence_scores.distribution),
+            datasets: [{
+                label: 'Components',
+                data: Object.values(data.detection_stats.confidence_scores.distribution),
+                backgroundColor: 'rgba(59, 130, 246, 0.5)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Render component types chart
+    new Chart(document.getElementById('types-chart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(data.component_type_stats),
+            datasets: [{
+                data: Object.values(data.component_type_stats).map(stats => stats.total),
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.5)',
+                    'rgba(16, 185, 129, 0.5)',
+                    'rgba(245, 158, 11, 0.5)',
+                    'rgba(239, 68, 68, 0.5)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Render validation chart
+    new Chart(document.getElementById('validation-chart'), {
+        type: 'pie',
+        data: {
+            labels: ['Valid', 'Invalid'],
+            datasets: [{
+                data: [data.validation_stats.valid, data.validation_stats.invalid],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.5)',
+                    'rgba(239, 68, 68, 0.5)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Load statistics on page load and after component updates
+document.addEventListener('DOMContentLoaded', loadStatistics);
+document.body.addEventListener('componentUpdated', loadStatistics);
+</script>
+{% endblock %}
