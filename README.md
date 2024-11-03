@@ -1,4 +1,4 @@
-# Modular Scene Processing System
+# Image Processing System
 
 A Flask-based computer vision application that leverages Meta's Segment Anything Model (SAM) for intelligent scene analysis and component detection. The system processes room scenes, identifies individual components, and manages the data through a PostgreSQL database.
 
