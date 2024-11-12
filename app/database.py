@@ -1,29 +1,41 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from .config import Config
+from sqlalchemy import event, text
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+from contextlib import contextmanager
+from typing import Generator, Any
+from flask import Flask
+import logging
+from .extensions import db  # Import db from extensions
 
-# Initialize Flask-SQLAlchemy
-db = SQLAlchemy()
+logger = logging.getLogger(__name__)
 
-# Create DatabaseManager for custom session handling
-class DatabaseManager:
-    def __init__(self):
-        self.engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
-        self.session_factory = sessionmaker(bind=self.engine)
-        self.Session = scoped_session(self.session_factory)
-    
-    def init_db(self):
-        """Initialize the database, creating all tables"""
-        db.create_all()
-    
-    def get_session(self):
-        """Get a new database session"""
-        return self.Session()
-    
-    def cleanup_session(self):
-        """Remove the current session"""
-        self.Session.remove()
+def init_db(app: Flask) -> None:
+    """Initialize database with PostgreSQL-specific configurations"""
+    with app.app_context():
+        # Register PostgreSQL-specific event listeners
+        @event.listens_for(db.engine, 'connect')
+        def set_postgresql_params(dbapi_connection: Any, connection_record: Any) -> None:
+            with dbapi_connection.cursor() as cursor:
+                cursor.execute("SET timezone='UTC';")
+                cursor.execute("SET statement_timeout = '30s';")
+                cursor.execute("SET lock_timeout = '10s';")
 
-# Create global database manager instance
-db_manager = DatabaseManager()
+@contextmanager
+def db_session() -> Generator:
+    """Provide a transactional scope around a series of operations."""
+    try:
+        yield db.session
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        logger.error(f"Database integrity error: {str(e)}")
+        raise
+    except OperationalError as e:
+        db.session.rollback()
+        logger.error(f"Database operational error: {str(e)}")
+        raise
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.error(f"Database error: {str(e)}")
+        raise
+    finally:
+        db.session.remove()
