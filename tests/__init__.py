@@ -1,7 +1,8 @@
 import unittest
 from flask import Flask
+from sqlalchemy import text
 from app import create_app
-from app.database import db_manager, db
+from app.database import db, db_session
 from app.models import RoomScene, Component, ComponentStatus
 from app.config import Config
 
@@ -15,20 +16,23 @@ class BaseTestCase(unittest.TestCase):
         self.app_context.push()
         
         # Initialize database
-        db_manager.init_db()
-        self.db = db_manager.get_session()
+        db.create_all()
     
     def tearDown(self):
-        if self.db:
-            # Clear test database
-            self.db.rollback()
-            self.db.close()
-            
-            # Drop all tables within app context
-            with self.app.app_context():
-                db.drop_all()
-            
-            db_manager.cleanup_session()
+        # Clean up database
+        with db_session() as session:
+            try:
+                session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
+                session.execute(text("""
+                    TRUNCATE room_scenes, components, processed_results 
+                    RESTART IDENTITY CASCADE
+                """))
+            except Exception as e:
+                print(f"Cleanup error: {e}")
+        
+        # Drop all tables within app context
+        with self.app.app_context():
+            db.drop_all()
         
         self.app_context.pop()
 
@@ -40,10 +44,11 @@ class BaseTestCase(unittest.TestCase):
             'file_path': 'test/path.jpg',
             **kwargs
         }
-        scene = RoomScene(**scene_data)
-        self.db.add(scene)
-        self.db.commit()
-        return scene
+        with db_session() as session:
+            scene = RoomScene(**scene_data)
+            session.add(scene)
+            session.commit()
+            return scene
 
     def create_test_component(self, scene_id, **kwargs):
         """Helper to create a test component"""
@@ -55,7 +60,8 @@ class BaseTestCase(unittest.TestCase):
             'status': ComponentStatus.PENDING,
             **kwargs
         }
-        component = Component(**component_data)
-        self.db.add(component)
-        self.db.commit()
-        return component
+        with db_session() as session:
+            component = Component(**component_data)
+            session.add(component)
+            session.commit()
+            return component

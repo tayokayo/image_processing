@@ -17,6 +17,16 @@ Your Development Flow
 	•	Generate Unit Tests for the new code, including any existing code that you've modified
 	•	Run tests locally to ensure nothing is broken
 	•	Add proper documentation to reflect the new code. Update existing documentation as needed.
+	•	Git Operations (after User approval and passing tests):
+		- Create feature branch if not already done
+		- Stage changes: `git add .`
+		- Commit with descriptive message: `git commit -m "feat: description of changes"`
+		- Push to feature branch: `git push origin feature/branch-name`
+		- If feature is complete:
+			- Merge latest main/develop into feature branch
+			- Resolve any conflicts
+			- Push final changes
+			- Create pull request if required by workflow
 	•	Once the User approves the feature and unit tests are passing, move to the next task in the coding instructions
 
 Technology Stack:

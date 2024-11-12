@@ -1,31 +1,51 @@
 import os
-from pathlib import Path
+from dotenv import load_dotenv
+import torch
+
+load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-123'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
-    UPLOAD_FOLDER = 'uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    SAM_MODEL_PATH = 'models/sam/sam_vit_h_4b8939.pth'
+    # Common configurations
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
     
-    @staticmethod
-    def init_app(app):
-        pass
+    # SAM Model Configuration
+    SAM_MODEL_PATH = os.getenv('SAM_MODEL_PATH', 'models/sam_vit_h_4b8939.pth')
+    SAM_MODEL_TYPE = os.getenv('SAM_MODEL_TYPE', 'vit_h')
+    SAM_DEVICE = os.getenv('SAM_DEVICE', 'cuda' if torch.cuda.is_available() else 'cpu')
+
+    # PostgreSQL Database URI
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
+    
+    # Connection Pool Settings
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'connect_args': {
+            'application_name': 'modular_scenes',
+            'options': '-c timezone=UTC'
+        }
+    }
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///dev.db'
+    DEVELOPMENT = True
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
-    SERVER_NAME = 'localhost.localdomain'
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('TEST_DB_NAME')}"
+    )
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///prod.db'
+    DEBUG = False
+    TESTING = False
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 
 config = {
     'development': DevelopmentConfig,

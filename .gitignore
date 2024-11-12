@@ -1,8 +1,40 @@
-*.pyc
-__pycache__/
-*.sqlite
-models/sam/*
-!models/sam/.gitkeep
-.env
+cat > .gitignore << EOL
+# Python
 venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+instance/
+storage/
+logs/
+*.log
+.pytest_cache/
+test_storage/
+*.db
+
+# OS
 .DS_Store
+Thumbs.db
+EOL
+
+# Database files
+*.sqlite
+
+# Model weights
+models/sam/*.pth

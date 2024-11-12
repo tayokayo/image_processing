@@ -1,3 +1,11 @@
+from threading import Lock
+from tenacity import retry, stop_after_attempt, wait_exponential
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from functools import lru_cache
+from datetime import datetime
 import cv2
 import numpy as np
 from pathlib import Path
@@ -7,9 +15,14 @@ from .sam_processor import SAMProcessor
 from .error_logger import ErrorLogger
 from .scene_validator import SceneValidator, ValidationResult
 from ..models import RoomScene, Component
-from ..database import db_manager
-from .. import db
+from ..database import db, db_session
 from flask import current_app
+from app.exceptions import SceneProcessingError
+from contextlib import contextmanager
+
+class DatabaseError(Exception):
+    """Base exception for database-related errors"""
+    pass
 
 @dataclass
 class ProcessingResult:
@@ -19,11 +32,12 @@ class ProcessingResult:
     room_scene_id: Optional[int] = None
     components: List[Dict[str, Any]] = None
     error_details: Optional[Dict] = None
+    statistics: Optional[Dict] = None  # New field for materialized view data
 
 class SceneHandler:
     """Handles scene processing operations including component detection and isolation"""
 
-    def __init__(self, sam_processor: SAMProcessor, error_logger: ErrorLogger, storage_base: str = 'storage', db_session=None):
+    def __init__(self, sam_processor: SAMProcessor, error_logger: ErrorLogger, storage_base: str = 'storage'):
         """
         Initialize SceneHandler with required dependencies.
         
@@ -35,10 +49,10 @@ class SceneHandler:
         """
         self.sam_processor = sam_processor
         self.error_logger = error_logger
-        self.storage_base = storage_base
         self.validator = SceneValidator(logger=error_logger.logger)
+        self._stats_refresh_lock = Lock()
         
-        # Set up storage paths using provided base
+        # Storage setup
         self.storage_base = Path(storage_base)
         self.components_dir = self.storage_base / 'components'
         self.scenes_dir = self.storage_base / 'scenes'
@@ -48,26 +62,50 @@ class SceneHandler:
         for dir_path in [self.components_dir, self.scenes_dir, self.processed_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
-        # Use provided session or default to Flask-SQLAlchemy session
-        self.db_session = db_session if db_session is not None else db.session
+    @lru_cache(maxsize=128)
+    def get_cached_statistics(self, room_scene_id: int, cache_time: datetime) -> Optional[Dict]:
+        """Get cached statistics with time-based invalidation"""
+        return self.refresh_statistics(room_scene_id)
+    
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    def refresh_statistics(self, room_scene_id: int) -> Optional[Dict[str, Any]]:
+        """Refresh and retrieve statistics from materialized views with retry logic."""
+        with self._stats_refresh_lock:
+            try:
+                with db_session() as session:
+                    # Refresh materialized views concurrently
+                    session.execute(text("REFRESH MATERIALIZED VIEW CONCURRENTLY detection_accuracy_stats_mv"))
+                    session.execute(text("REFRESH MATERIALIZED VIEW CONCURRENTLY review_metrics_mv"))
+                    
+                    # Fetch combined statistics
+                    stats = session.execute(text("""
+                        SELECT 
+                            d.total_components,
+                            d.avg_confidence,
+                            d.acceptance_rate,
+                            d.type_distribution,
+                            d.avg_review_time as detection_review_time,
+                            r.total_reviews,
+                            r.avg_review_time as overall_review_time,
+                            r.median_confidence,
+                            r.status_distribution
+                        FROM detection_accuracy_stats_mv d
+                        LEFT JOIN review_metrics_mv r ON TRUE
+                        WHERE d.room_scene_id = :scene_id
+                    """), {"scene_id": room_scene_id}).first()
+                    
+                    return dict(stats) if stats else None
+
+            except Exception as e:
+                self.error_logger.log_error(str(e), "StatisticsRefreshError")
+                return None
 
     def process_scene(self, scene_path: str, category: str) -> ProcessingResult:
-        """
-        Process a scene image to detect and isolate components.
-        
-        Args:
-            scene_path: Path to the scene image
-            category: Category of the scene (e.g., 'living_room')
-            
-        Returns:
-            ProcessingResult containing processing status and results
-        """
+        """Process a scene image to detect and isolate components."""
         try:
-            # Ensure we're in an application context
             if not current_app:
                 raise RuntimeError("No application context")
                 
-            # Validate scene
             validation_result = self.validator.validate_scene(scene_path)
             if not validation_result.is_valid:
                 return ProcessingResult(
@@ -76,7 +114,6 @@ class SceneHandler:
                     error_details={'validation_error': validation_result.error_type}
                 )
 
-            # Load scene
             scene_image = self._load_scene(scene_path)
             if scene_image is None:
                 return ProcessingResult(
@@ -85,40 +122,53 @@ class SceneHandler:
                     error_details={'error_type': 'load_failure'}
                 )
 
-            # Extract metadata and create room scene record
-            metadata = self._extract_metadata(scene_image)
-            
-            # Create room scene using Flask-SQLAlchemy session
-            room_scene = RoomScene(
-                name=Path(scene_path).stem,
-                category=category,
-                file_path=scene_path,
-                scene_metadata=metadata
-            )
-            self.db_session.add(room_scene)
-            self.db_session.commit()
+            with db_session() as session:
+                # Create room scene with JSONB metadata
+                metadata = self._extract_metadata(scene_image)
+                room_scene = RoomScene(
+                    name=Path(scene_path).stem,
+                    category=category,
+                    file_path=scene_path,
+                    scene_metadata=metadata
+                )
+                session.add(room_scene)
+                session.flush()  # Get ID without committing
 
-            # Process components
-            components = self._isolate_components(scene_image, room_scene.id)
-            if not components:
+                # Process components in nested transaction
+                try:
+                    with session.begin_nested():  # Create savepoint
+                        components = self._isolate_components(scene_image, room_scene.id)
+                        if not components:
+                            raise ValueError("No components detected in scene")
+                except Exception as e:
+                    # Rollback to savepoint, keep room scene
+                    return ProcessingResult(
+                        success=False,
+                        message="Component processing failed",
+                        room_scene_id=room_scene.id,
+                        components=[],
+                        error_details={'component_error': str(e)}
+                    )
+
+                # Add statistics to successful result
+                statistics = self.get_cached_statistics(room_scene.id, datetime.now())
+                
                 return ProcessingResult(
-                    success=False,
-                    message="No components detected in scene",
+                    success=True,
+                    message="Scene processed successfully",
                     room_scene_id=room_scene.id,
-                    components=[]
+                    components=components,
+                    statistics=statistics
                 )
 
+        except DatabaseError as e:
             return ProcessingResult(
-                success=True,
-                message="Scene processed successfully",
-                room_scene_id=room_scene.id,
-                components=components
+                success=False,
+                message=str(e),
+                error_details={'database_error': str(e)}
             )
-
         except Exception as e:
             self.error_logger.log_error(str(e), "SceneProcessingError", scene_path)
-            if 'room_scene' in locals():
-                self.db_session.rollback()
             return ProcessingResult(
                 success=False,
                 message=f"Processing failed: {str(e)}",
@@ -133,18 +183,6 @@ class SceneHandler:
             'channels': image.shape[2],
             'mean_color': image.mean(axis=(0,1)).tolist()
         }
-
-    def _create_room_scene(self, scene_path: str, category: str, metadata: Dict) -> RoomScene:
-        """Create and save room scene record"""
-        room_scene = RoomScene(
-            name=Path(scene_path).stem,
-            category=category,
-            file_path=scene_path,
-            scene_metadata=metadata
-        )
-        self.db.add(room_scene)
-        self.db.commit()
-        return room_scene
 
     def _isolate_components(self, image: np.ndarray, room_scene_id: int) -> List[Dict]:
         """Detect and isolate components from scene"""
@@ -223,47 +261,43 @@ class SceneHandler:
             return None
 
     def _process_component(self, image: np.ndarray, mask: np.ndarray, 
-                         room_scene_id: int, index: int) -> Optional[Dict]:
+                        room_scene_id: int, index: int) -> Optional[Dict]:
         """Process individual component using its mask"""
         try:
-            # Apply mask to image
-            masked_image = image.copy()
-            masked_image[~mask] = [255, 255, 255]  # White background
-            
             # Get component bounds
             bounds = self._get_component_bounds(mask)
-            if bounds is None:
+            if not bounds:
                 return None
-            
-            # Crop component
+                
             y1, y2, x1, x2 = bounds
-            cropped_component = masked_image[y1:y2, x1:x2]
             
-            # Save component image
-            component_filename = f"component_{room_scene_id}_{index}.png"
-            component_path = str(self.components_dir / component_filename)
-            cv2.imwrite(component_path, cv2.cvtColor(cropped_component, cv2.COLOR_RGB2BGR))
+            # Extract and save component image
+            component_img = image[y1:y2, x1:x2].copy()
+            component_path = str(self.components_dir / f"component_{room_scene_id}_{index}.jpg")
+            cv2.imwrite(component_path, cv2.cvtColor(component_img, cv2.COLOR_RGB2BGR))
             
-            # Create component record
-            component = Component(
-                room_scene_id=room_scene_id,
-                name=f"Component {index}",
-                component_type="auto_detected",
-                file_path=component_path,
-                position_data={
+            # Use db_session for database operations
+            with db_session() as session:
+                # Create component record
+                component = Component(
+                    room_scene_id=room_scene_id,
+                    name=f"Component {index}",
+                    component_type="auto_detected", 
+                    file_path=component_path,
+                    position_data={
+                        'bounds': bounds,
+                        'center': [(x1 + x2) // 2, (y1 + y2) // 2],
+                        'size': [(x2 - x1), (y2 - y1)]
+                    }
+                )
+                session.add(component)
+                session.commit()
+                
+                return {
+                    'component_id': component.id,
                     'bounds': bounds,
-                    'center': [(x1 + x2) // 2, (y1 + y2) // 2],
-                    'size': [(x2 - x1), (y2 - y1)]
+                    'path': component_path
                 }
-            )
-            self.db_session.add(component)
-            self.db_session.commit()
-            
-            return {
-                'component_id': component.id,
-                'bounds': bounds,
-                'path': component_path
-            }
             
         except Exception as e:
             self.error_logger.log_error(str(e), "ComponentProcessingError")
