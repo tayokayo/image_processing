@@ -8,7 +8,8 @@ from .processing.scene_handler import SceneHandler
 from .processing.scene_validator import SceneValidator
 from .processing.error_logger import ErrorLogger
 from .models import RoomScene, Component, ComponentStatus
-from .database import db_manager, db, db_session
+from .database import db_session
+from .extensions import db
 from flask import abort
 from app.validators import validate_component_category, validate_confidence_score
 from app.statistics import SceneStatistics
@@ -23,7 +24,7 @@ def handle_errors(f):
         except SQLAlchemyError as e:
             return jsonify({
                 'error': 'Database error occurred',
-                'toast': {'message': 'An error occurred while accessing the database', 'type': 'error'}
+                'toast': {'message': str(e), 'type': 'error'}
             }), 500
         except Exception as e:
             return jsonify({
@@ -85,51 +86,44 @@ def upload():
             os.makedirs(os.path.dirname(temp_path), exist_ok=True)
             file.save(temp_path)
             
-            # Get current database session
-            current_db = db_manager.get_session()
-            
-            # Process the scene with the file path
-            error_logger = ErrorLogger()
-            scene_handler = SceneHandler(
-                sam_processor, 
-                error_logger,
-                db_session=current_db,  # Pass the current session
-                storage_base='storage'
-            )
-            
-            # Process the scene using the saved file path
-            result = scene_handler.process_scene(temp_path, category)
-            
-            # Clean up temp file
-            os.remove(temp_path)
-            
-            if result.success:
-                return jsonify({
-                    'status': 'success',
-                    'scene_id': result.room_scene_id,
-                    'message': 'Scene processed successfully'
-                })
-            else:
-                error_details = {}
-                if result.error_details:
-                    error_details = {
-                        str(k): str(v) for k, v in result.error_details.items()
-                    }
+            with db_session() as session:
+                error_logger = ErrorLogger()
+                scene_handler = SceneHandler(
+                    sam_processor, 
+                    error_logger,
+                    db_session=session,
+                    storage_base='storage'
+                )
                 
-                return jsonify({
-                    'status': 'error',
-                    'message': str(result.message),
-                    'details': error_details
-                }), 400
+                result = scene_handler.process_scene(temp_path, category)
                 
+                if result.success:
+                    return jsonify({
+                        'status': 'success',
+                        'scene_id': result.room_scene_id,
+                        'message': 'Scene processed successfully'
+                    })
+                else:
+                    error_details = {}
+                    if result.error_details:
+                        error_details = {
+                            str(k): str(v) for k, v in result.error_details.items()
+                        }
+                    
+                    return jsonify({
+                        'status': 'error',
+                        'message': str(result.message),
+                        'details': error_details
+                    }), 400
+                    
         except Exception as e:
-            print(f"Upload error: {str(e)}")
             return jsonify({
                 'status': 'error',
                 'message': str(e)
             }), 500
-    
-    return render_template('admin/upload.html', categories=ROOM_CATEGORIES)
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
 @admin_bp.route('/processing')
 def processing():

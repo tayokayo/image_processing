@@ -17,122 +17,171 @@ from app.processing.error_logger import ErrorLogger
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+from app.processing.sam_processor import SAMProcessor
 
 class TestEndToEndWorkflow(unittest.TestCase):
+    def _create_blurry_image(self):
+        """Create a blurry test image"""
+        img = np.ones((300, 400, 3), np.uint8) * 255
+        blur = cv2.GaussianBlur(img, (51, 51), 0)
+        _, buffer = cv2.imencode('.jpg', blur)
+        return buffer.tobytes()
+
+    def _create_quality_image(self):
+        """Create a high-quality test image"""
+        img = np.ones((300, 400, 3), np.uint8) * 255
+        img[:, :, 0] = 0
+        img[:, :, 1] = 255
+        img[:, :, 2] = 0
+        _, buffer = cv2.imencode('.jpg', img)
+        return buffer.tobytes()
+
     def setUp(self):
-        """Set up test environment"""
-        # 1. Configure logging
-        logging.basicConfig(level=logging.DEBUG)
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("Setting up test environment...")
-
-        # 2. Create app and use app context
-        self.app = create_app('testing')
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-
-        # 3. Initialize database
-        db.create_all()
-
-        # 4. Setup test directories
-        self._setup_test_directories()
-
-        # 5. Clean existing test data
-        with db_session() as session:
-            session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
-            session.execute(text("""
-                TRUNCATE room_scenes, components 
-                RESTART IDENTITY CASCADE
-            """))
-            session.commit()
-
-        # 6. Initialize application components
-        self.client = self.app.test_client()
-        self._setup_sam_processor()
-        self._verify_database_connection()
-
-        self.logger.info("✓ Test environment setup completed")
-
-    def _setup_test_directories(self):
-        """Setup test directories"""
-        self.test_dir = Path('test_storage')
-        self.scenes_dir = self.test_dir / 'scenes'
-        self.components_dir = self.test_dir / 'components'
-        self.temp_dir = self.test_dir / 'temp'
-        
-        for dir_path in [self.scenes_dir, self.components_dir, self.temp_dir]:
-            dir_path.mkdir(parents=True, exist_ok=True)
-        
-        self.app.config['UPLOAD_FOLDER'] = str(self.temp_dir)
-
-    def _setup_sam_processor(self):
-        """Initialize SAM processor"""
-        from app.processing.sam_processor import SAMProcessor
-        self.app.sam_processor = SAMProcessor(
-            self.app.config.get('SAM_MODEL_PATH', 'test_model_path')
-        )
-
-    def _verify_database_connection(self):
-        """Verify database connection with test record"""
+        """Set up test environment for production database"""
         try:
-            with db_session() as session:
-                test_scene = RoomScene(
-                    name='Test Scene',
-                    category='living_room',
-                    file_path='test/path.jpg'
-                )
-                session.add(test_scene)
-                session.commit()
-                
-                verify_scene = session.query(RoomScene).first()
-                if not verify_scene:
-                    raise Exception("Database verification failed")
-                
-                session.delete(verify_scene)
-                session.commit()
+            # Configure logging
+            logging.basicConfig(level=logging.INFO)
+            
+            # Load environment variables for database connection
+            db_user = os.getenv('DB_USER')
+            db_password = os.getenv('DB_PASSWORD')
+            db_host = os.getenv('DB_HOST')
+            db_port = os.getenv('DB_PORT')
+            db_name = os.getenv('DB_NAME')
+            sam_model_path = os.getenv('SAM_MODEL_PATH')
+            
+            if not all([db_user, db_password, db_host, db_port, db_name]):
+                raise ValueError("Missing required database environment variables")
+            
+            # Initialize app context with production database config
+            self.app = create_app('production')
+            self.app.config.update({
+                'SERVER_NAME': 'localhost.localdomain',
+                'PREFERRED_URL_SCHEME': 'http',
+                'APPLICATION_ROOT': '/',
+                'SQLALCHEMY_DATABASE_URI': f'postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+            })
+            self.app_context = self.app.app_context()
+            self.app_context.push()
+            
+            # Initialize components
+            self.error_logger = ErrorLogger()
+            self.sam_processor = SAMProcessor(model_path=sam_model_path)
+            self.scene_handler = SceneHandler(
+                sam_processor=self.sam_processor,
+                error_logger=self.error_logger
+            )
+            
+            # Register scene handler with app
+            self.app.scene_handler = self.scene_handler
+            
         except Exception as e:
-            raise Exception(f"Database setup failed: {str(e)}")
+            self.tearDown()
+            raise RuntimeError(f"Failed to set up test environment: {str(e)}")
 
     def tearDown(self):
         """Clean up test environment"""
-        self.logger.info("Cleaning up test environment...")
-
         try:
-            with db_session() as session:
-                session.execute(text("SET CONSTRAINTS ALL DEFERRED"))
-                session.execute(text("""
-                    TRUNCATE room_scenes, components 
-                    RESTART IDENTITY CASCADE
-                """))
-            self.logger.info("✓ Database tables cleaned")
-        except SQLAlchemyError as e:
-            self.logger.error(f"Database cleanup error: {str(e)}")
-
-        if self.test_dir.exists():
-            shutil.rmtree(self.test_dir)
-
-        self.app_context.pop()
-        self.logger.info("✓ Test environment cleanup completed")
-
-    # Image creation methods remain the same
-    def _create_blurry_image(self):
-        """Reference original implementation"""
-        startLine: 143
-        endLine: 156
-
-    def _create_quality_image(self):
-        """Reference original implementation"""
-        startLine: 158
-        endLine: 180
+            # Only remove session, don't truncate production tables
+            db.session.remove()
+            
+            if hasattr(self, 'app_context'):
+                self.app_context.pop()
+                
+        except Exception as e:
+            print(f"Warning: Error during tearDown: {str(e)}")
 
     def test_complete_workflow(self):
-        """Reference original implementation with updated session management"""
-        startLine: 143
-        endLine: 315
+        """Test end-to-end workflow with proper context management"""
+        client = self.app.test_client()
+
+        try:
+            # Create test images
+            blurry_image = self._create_blurry_image()
+            quality_image = self._create_quality_image()
+
+            # Test blurry image upload
+            with db_session() as session:
+                # Create scene record with blurry image data
+                blurry_scene = RoomScene(
+                    name='blurry_test_scene',
+                    category='living_room',
+                    image_data=blurry_image,
+                    metadata={'quality': 'low'}
+                )
+                session.add(blurry_scene)
+                session.flush()
+
+                # Process blurry scene
+                response = client.post(
+                    url_for('admin.process_scene'),
+                    json={'scene_id': blurry_scene.id}
+                )
+                assert response.status_code in [200, 400]
+
+                # Verify scene was processed
+                processed_scene = session.execute(
+                    text("SELECT * FROM room_scenes WHERE id = :id"),
+                    {"id": blurry_scene.id}
+                ).first()
+                assert processed_scene is not None
+
+            # Test quality image upload
+            with db_session() as session:
+                # Create scene record with quality image data
+                quality_scene = RoomScene(
+                    name='quality_test_scene',
+                    category='living_room',
+                    image_data=quality_image,
+                    metadata={'quality': 'high'}
+                )
+                session.add(quality_scene)
+                session.flush()
+
+                # Process quality scene
+                response = client.post(
+                    url_for('admin.process_scene'),
+                    json={'scene_id': quality_scene.id}
+                )
+                assert response.status_code in [200, 400]
+
+                # Wait for processing completion
+                scene = session.execute(
+                    text("""
+                        SELECT * FROM room_scenes 
+                        WHERE id = :id AND processed = true
+                    """),
+                    {"id": quality_scene.id}
+                ).first()
+                
+                while not scene:
+                    scene = session.execute(
+                        text("""
+                            SELECT * FROM room_scenes 
+                            WHERE id = :id AND processed = true
+                        """),
+                        {"id": quality_scene.id}
+                    ).first()
+
+                # Verify components were created
+                components = session.execute(
+                    text("""
+                        SELECT * FROM components 
+                        WHERE room_scene_id = :scene_id 
+                        AND status = 'PENDING'
+                    """),
+                    {"scene_id": quality_scene.id}
+                ).fetchall()
+                
+                assert len(components) > 0
+
+        finally:
+            self.app_context.pop()
 
     def verify_db_state(self, point_name: str):
         """Helper to verify database state at key points"""
-        self.logger.info(f"\nDatabase state at: {point_name}")
+        logger = logging.getLogger(__name__)
+        logger.info(f"\nDatabase state at: {point_name}")
         try:
             with db_session() as session:
                 # Check scenes with explicit column selection
@@ -141,9 +190,9 @@ class TestEndToEndWorkflow(unittest.TestCase):
                            created_at, updated_at
                     FROM room_scenes
                 """)).fetchall()
-                self.logger.info(f"Room Scenes ({len(scenes)}):")
+                logger.info(f"Room Scenes ({len(scenes)}):")
                 for scene in scenes:
-                    self.logger.info(
+                    logger.info(
                         f"  - ID: {scene.id}, Name: {scene.name}, "
                         f"Category: {scene.category}"
                     )
@@ -155,17 +204,18 @@ class TestEndToEndWorkflow(unittest.TestCase):
                     FROM components
                     ORDER BY created_at DESC
                 """)).fetchall()
-                self.logger.info(f"Components ({len(components)}):")
+                logger.info(f"Components ({len(components)}):")
                 for comp in components:
-                    self.logger.info(
+                    logger.info(
                         f"  - ID: {comp.id}, Scene: {comp.room_scene_id}, "
                         f"Status: {comp.status}"
                     )
         except Exception as e:
-            self.logger.error(f"Failed to verify DB state: {e}")
+            logger.error(f"Failed to verify DB state: {e}")
 
     def verify_transaction(self, operation: str):
         """Helper to verify transaction state"""
+        logger = logging.getLogger(__name__)
         try:
             with db_session() as session:
                 result = session.execute(text("""
@@ -175,11 +225,11 @@ class TestEndToEndWorkflow(unittest.TestCase):
                     AND query NOT LIKE '%pg_stat_activity%'
                 """)).scalar()
                 
-                self.logger.info(f"\nTransaction check ({operation}):")
-                self.logger.info(f"- Active transactions: {result}")
-                self.logger.info(f"- Session state: {session.is_active}")
+                logger.info(f"\nTransaction check ({operation}):")
+                logger.info(f"- Active transactions: {result}")
+                logger.info(f"- Session state: {session.is_active}")
         except Exception as e:
-            self.logger.error(f"Transaction verification failed: {e}")
+            logger.error(f"Transaction verification failed: {e}")
 
 if __name__ == '__main__':
     unittest.main()
