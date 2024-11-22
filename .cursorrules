@@ -7,27 +7,63 @@ Key Principles:
 	•	Implement proper error handling with early returns
 	•	Follow SQLAlchemy best practices for database operations
 	•	Ensure proper integration with ML models (specifically SAM)
+	•	Maintain a “context map” to evaluate dependencies and second-order effects.
+	•	Use troubleshooting processes that raise secondary impacts for user alignment before finalizing fixes
+
+Troubleshooting:
+
+	•	Always check the project’s context map before proposing solutions.
+	•	Summarize proposed changes and downstream effects for user alignment.
+	•	Use automated tests to validate that changes do not introduce regressions.
 
 Your Development Flow
 
-	•	Review coding instructions from the User
-	•	Review the codebase and understand the existing patterns
-	•	Write the code in the most efficient way possible
-	•	Explain the code to the user after you've written it
-	•	Generate Unit Tests for the new code, including any existing code that you've modified
-	•	Run tests locally to ensure nothing is broken
-	•	Add proper documentation to reflect the new code. Update existing documentation as needed.
-	•	Git Operations (after User approval and passing tests):
-		- Create feature branch if not already done
-		- Stage changes: `git add .`
-		- Commit with descriptive message: `git commit -m "feat: description of changes"`
-		- Push to feature branch: `git push origin feature/branch-name`
-		- If feature is complete:
-			- Merge latest main/develop into feature branch
-			- Resolve any conflicts
-			- Push final changes
-			- Create pull request if required by workflow
-	•	Once the User approves the feature and unit tests are passing, move to the next task in the coding instructions
+	1.	Understand the Task:
+	•	Review coding instructions from the user.
+	•	Analyze the project’s context (using the context map) to identify dependencies and potential second-order effects of proposed changes.
+	
+	2.	Code Implementation:
+	•	Write clean, modular code with proper type hints.
+	•	Start with simple, functional implementations, introducing complexity only as needed.
+	•	Ensure all changes align with the updated database patterns and Flask guidelines.
+	
+	3.	Troubleshooting:
+	•	Use the context map to evaluate potential downstream impacts of your changes.
+	•	Summarize these impacts and raise them to the user for alignment before proceeding.
+	•	Validate fixes by running automated tests and reviewing affected components.
+	
+	4.	Testing:
+	•	Generate unit tests for all new and modified code.
+	•	Run tests locally to confirm no regressions or broken functionality.
+	•	If database-related changes are made, ensure that migrations are applied and verified.
+	
+	5.	Documentation:
+	•	Document new code and update existing documentation to reflect changes.
+	•	Provide clear comments for complex logic or unusual implementations.
+	
+	6.	GitHub Workflow:
+	•	Before starting any operations, check for uncommitted changes:
+	•	If uncommitted changes exist: Notify the user and stash changes if approved.
+	•	Use git stash to save changes and git stash apply to reapply them after operations are complete.
+	•	Use clear branch naming conventions:
+	•	Feature branches: feature/<short-description>
+	•	Bugfix branches: bugfix/<issue-id>
+	•	Hotfix branches: hotfix/<issue-id>
+	•	Follow this commit and push workflow:
+	•	Stage changes: git add .
+	•	Commit with a descriptive message: git commit -m "feat: description of changes"
+	•	Push to the relevant branch: git push origin <branch-name>
+	•	Before finalizing:
+	•	Pull and merge the latest changes from the main or develop branch into your working branch.
+	•	Resolve any conflicts locally and confirm with the user before proceeding.
+	•	If the feature or fix is complete:
+	•	Push final changes.
+	•	Create a pull request if required by the workflow.
+	
+	7.	Finalization:
+	•	Once the user approves the feature and all unit tests pass, merge the feature branch into the main branch (or as directed).
+	•	Clean up stashed changes if applicable.
+	•	Proceed to the next task in the coding instructions
 
 Technology Stack:
 
@@ -47,20 +83,26 @@ Flask Guidelines:
 	•	Use Flask’s request lifecycle hooks appropriately
 	•	Follow RESTful principles for API endpoints
 
-Database Patterns with PostgreSQL:
+Database Patterns for PostgreSQL
 
-	•	Use Flask-SQLAlchemy for ORM operations with PostgreSQL as the database manager
-	•	Implement proper database migrations with Flask-Migrate
-	•	Ensure proper session management and connection pooling
-	•	Optimize queries: Use EXPLAIN ANALYZE for query tuning, avoid SELECT * in large tables, and prefer explicit column selections to optimize performance
-	•	Leverage PostgreSQL JSONB for semi-structured data: Store complex data (such as segmentation metadata) in JSONB fields to facilitate fast querying and indexing
-	•	Use indexes strategically: Create indexes on frequently queried columns, including JSONB fields with GIN indexes for efficient querying. Avoid over-indexing, which can slow down writes
-	•	Transaction Management: Ensure transactions are properly managed using SQLAlchemy’s session context; use nested transactions (savepoints) where applicable to handle partial updates
-	•	Enum Patterns: Use PostgreSQL ENUMs with SQLAlchemy enums to maintain consistent status values and improve query efficiency
-	•	Use UPSERT for insert-or-update patterns: When necessary, use ON CONFLICT for upsert operations, which is supported natively in PostgreSQL
-	•	Implement cascade deletes with foreign keys: Ensure data integrity by using cascading deletes where necessary in SQLAlchemy relationships to remove dependent records
-	•	Enable connection pooling: Configure Flask-SQLAlchemy or SQLAlchemy to use connection pooling, keeping connections efficient and available. Set limits based on anticipated traffic and server capabilities
-	•	Backup and Disaster Recovery: Regularly back up your PostgreSQL database and use pg_dump for efficient backups. Test restores periodically to ensure data reliability in case of failures
+Phase 1: Simplified Implementation (Default for MVPs)
+
+	•	Schema Design:
+	•	Use simple, flat SQLAlchemy models with essential constraints like primary keys and foreign keys.
+	•	Avoid complex data types (e.g., JSONB) unless absolutely necessary for functionality.
+	•	Queries:
+	•	Use straightforward ORM queries; avoid manual SQL unless required for specific optimizations.
+	•	Select explicit columns in queries instead of SELECT * for better control and performance.
+	•	Connections:
+	•	Use default connection pooling settings in Flask-SQLAlchemy; no manual tuning.
+	•	Transactions:
+	•	Manage transactions through SQLAlchemy’s session context. Avoid nested transactions or advanced patterns initially.
+	•	Indexes:
+	•	Rely on default indexing (e.g., primary keys) unless profiling indicates the need for additional indexes.
+	•	Error Handling:
+	•	Validate inputs at the application layer to prevent invalid data from reaching the database.
+	•	Use database constraints sparingly and only when application-side validation is insufficient.
+
 
 ML Integration:
 
@@ -99,11 +141,14 @@ Development Standards:
 
 PostgreSQL Best Practices:
 
-	•	Connection Pooling: Use SQLAlchemy’s connection pooling features to avoid excessive connections and to maintain performance under load.
-	•	Avoid N+1 Query Problem: Leverage SQLAlchemy’s joinedload or subqueryload for efficient querying of related models.
-	•	Use Views for Complex Aggregations: Create materialized views for complex aggregations that do not need to be real-time, improving query performance.
-	•	Data Integrity Constraints: Enforce data integrity through primary keys, foreign keys, unique constraints, and checks at the database level to prevent inconsistent data.
-	•	Regularly Analyze and Vacuum: Schedule ANALYZE and VACUUM operations to maintain table statistics and performance.
+	Regular Maintenance:
+	•	Schedule VACUUM and ANALYZE operations to maintain database health.
+	Testing and Monitoring:
+	•	Continuously monitor query performance and database load using profiling tools.
+	Minimized Overhead:
+	•	Avoid over-indexing and excessive constraints during early stages to maintain simplicity.
+	Documentation:
+	•	Document all schema changes and their rationale for future reference.
 
 Always:
 

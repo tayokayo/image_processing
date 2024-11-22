@@ -42,76 +42,61 @@ class TestDatabaseInitialization(unittest.TestCase):
                 self.logger.info("Verifying PostgreSQL features...")
                 session.execute(text("SELECT version()")).scalar()
                 
+                # Create test image data
+                test_image = b'test image data'
+                
                 self.logger.info("\nTesting table creation:")
-                # Create test records with proper transaction handling
+                # Create test scene with image data
                 scene = RoomScene(
                     name='Test Scene',
                     category='living_room',
-                    file_path='test/path.jpg',
-                    scene_metadata={'test': 'data'}  # Testing JSONB
+                    image_data=test_image,
+                    scene_metadata={'test': 'data'},
+                    processed=False
                 )
                 session.add(scene)
-                session.flush()  # Get ID without committing
+                session.flush()
                 
+                # Create test component
                 component = Component(
                     room_scene_id=scene.id,
                     name='Test Component',
                     component_type='furniture',
-                    file_path='test/component.jpg',
-                    status='PENDING'  # Testing enum
+                    position_data={'bounds': [0, 0, 100, 100]},
+                    status='PENDING'
                 )
                 session.add(component)
-                session.flush()
-                
-                result = ProcessedResult(
-                    component_id=component.id,
-                    original_path='test/original.jpg',
-                    processed_path='test/processed.jpg',
-                    metadata={'processing': 'complete'}  # Testing JSONB
-                )
-                session.add(result)
                 session.commit()
-                self.logger.info("✓ Created all test records")
                 
-                # Verify records with explicit column selection
-                self.logger.info("\nVerifying records:")
-                scenes = session.execute(text("""
-                    SELECT id, name, category, scene_metadata
+                # Verify records
+                saved_scene = session.execute(text("""
+                    SELECT id, name, category, scene_metadata, processed
                     FROM room_scenes
                     WHERE id = :scene_id
                 """), {'scene_id': scene.id}).first()
                 
-                components = session.execute(text("""
-                    SELECT id, room_scene_id, status, component_type
+                saved_component = session.execute(text("""
+                    SELECT id, room_scene_id, name, component_type, status
                     FROM components
                     WHERE id = :comp_id
                 """), {'comp_id': component.id}).first()
                 
-                results = session.execute(text("""
-                    SELECT id, component_id, metadata
-                    FROM processed_results
-                    WHERE id = :result_id
-                """), {'result_id': result.id}).first()
+                # Verify scene data
+                assert saved_scene is not None
+                assert saved_scene.name == 'Test Scene'
+                assert saved_scene.processed is False
+                assert isinstance(saved_scene.scene_metadata, dict)
                 
-                # Verify record counts
-                self.assertIsNotNone(scenes, "Scene should exist")
-                self.assertIsNotNone(components, "Component should exist")
-                self.assertIsNotNone(results, "ProcessedResult should exist")
+                # Verify component data
+                assert saved_component is not None
+                assert saved_component.room_scene_id == scene.id
+                assert saved_component.status == 'PENDING'
                 
-                # Verify PostgreSQL-specific features
-                self.assertIsInstance(scenes.scene_metadata, dict, "JSONB should be converted to dict")
-                self.assertEqual(components.status, 'PENDING', "Enum should work correctly")
-                
-                self.logger.info("✓ All records verified")
+                self.logger.info("✓ All database tests passed")
                 
         except Exception as e:
-            self.logger.error(f"\nError during database testing: {str(e)}")
+            self.logger.error(f"Database setup failed: {e}")
             raise
-        finally:
-            # Clean up
-            with db_session() as session:
-                session.execute(text("TRUNCATE room_scenes, components, processed_results RESTART IDENTITY CASCADE"))
-            self.logger.info("\nDatabase cleanup completed")
 
 if __name__ == '__main__':
     unittest.main()
