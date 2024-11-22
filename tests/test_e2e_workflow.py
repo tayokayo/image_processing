@@ -107,7 +107,7 @@ class TestEndToEndWorkflow(unittest.TestCase):
                     name='blurry_test_scene',
                     category='living_room',
                     image_data=blurry_image,
-                    metadata={'quality': 'low'}
+                    scene_metadata={'quality': 'low'}
                 )
                 session.add(blurry_scene)
                 session.flush()
@@ -133,7 +133,7 @@ class TestEndToEndWorkflow(unittest.TestCase):
                     name='quality_test_scene',
                     category='living_room',
                     image_data=quality_image,
-                    metadata={'quality': 'high'}
+                    scene_metadata={'quality': 'high'}
                 )
                 session.add(quality_scene)
                 session.flush()
